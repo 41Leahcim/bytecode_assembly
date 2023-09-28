@@ -73,6 +73,7 @@ pub fn read_out(code: &mut Code) -> Token {
         }
         output.push(c);
     }
+    output.push('\n');
     Token::Out(output)
 }
 

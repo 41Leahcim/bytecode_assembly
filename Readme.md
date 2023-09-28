@@ -10,3 +10,11 @@ First make sure you have compiled the compiler using `cargo build --release`. Yo
 
 ### Using the compiler
 The compiler only accepts a single input file. The name of this file should end with .basm for binary assembly files or .basmo for the bytecode. If you use the -o flag, the compiler will store the bytecode at the specified path. You can use the -r or --run flag to run the bytecode. The compiler will display an error message if neither was passed.
+
+## Syntax
+### Comments
+The only supported comment is the multi-line comment. This comment starts with `/*` and ends with `*/` like in most languages. Single line comments are not yet supported, but this may happen in the future.
+
+### Output
+To print output, you can use the `out` keyword. It can print strings or any other value. Arguments that aren't strings, will have a new line appended. Strings won't get a new line appended, to support situations where you don't want a new line after output. You can still add a new line yourself, as strings are the only part of the language where escape characters are supported.
+Strings support the following escape characters: `\t`, `\n`, `\r`, `\\`, and `\0`.

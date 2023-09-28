@@ -62,6 +62,7 @@ fn main() {
         postcard::to_io(&tokens, output).expect("Failed to write tokens to output file");
     }
     let storing = Instant::now();
+    eprintln!("{tokens:?}");
 
     println!("Parsing args: {}", (parsing - start).as_secs_f64());
     if extension == "basm" {

@@ -1,0 +1,9 @@
+/* test */
+/*Narrow Comment*/
+/*SpaceLessComment*/
+/*
+ Multi
+ Line
+ Comment
+*/
+out "Hello \"World\"\n"

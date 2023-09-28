@@ -2,6 +2,12 @@
 name = "byte_assembly"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "A simple programming language compiled to byecode"
+readme = "Readme.md"
+keywords = ["programming-language", "bytecode"]
+categories = ["programming-language"]
+repository = "https://github.com/41Leahcim/bytecode_assembly"
 
 [profile.release]
 lto = true

@@ -183,14 +183,25 @@ pub fn mov(code: &mut Code) -> Token {
                 out
             });
     let value = value.trim();
-    let Ok(value) = value.parse::<i64>() else {
+    if let Ok(value) = value.parse::<i64>() {
+        Token::Mov(id, Value::Number(value))
+    } else if value.chars().next().is_some_and(|c| c == 'r') {
+        let value = value.chars().skip(1).collect::<String>();
+        let Ok(register) = value.parse::<u8>() else {
+            panic!(
+                "Invalid register id \"{value}\": {}:{}",
+                code.line(),
+                code.column()
+            );
+        };
+        Token::MovR(id, register)
+    } else {
         panic!(
             "Invalid value \"{value}\": {}:{}",
             code.line(),
             code.column()
         );
-    };
-    Token::Mov(id, Value::Number(value))
+    }
 }
 
 pub fn parse_command(command: &str, code: &mut Code) -> Option<Token> {

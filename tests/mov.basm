@@ -1,3 +1,7 @@
+out "R0: {0}\nR1: {1}\n\n"
 mov r0, 9
+out "R0: {0}\nR1: {1}\n\n"
+mov r1, r0
+out "R0: {0}\nR1: {1}\n\n"
 mov r1, 1234567890
 out "R0: {0}\nR1: {1}\n"

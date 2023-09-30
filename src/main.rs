@@ -12,6 +12,7 @@ pub enum Token {
     Comment(String),
     Out(String),
     Mov(u8, Value),
+    MovR(u8, u8),
 }
 
 #[derive(Debug, Parser)]

@@ -176,11 +176,12 @@ pub fn mov(code: &mut Code) -> Token {
     if last_char == '\n' {
         panic!("Unexpected End Of Line: {}:{}", code.line(), code.column());
     }
-    let value = last_char.to_string()
-        + &code
-            .by_ref()
-            .take_while(|c| !c.is_whitespace())
-            .collect::<String>();
+    let value =
+        code.take_while(|c| !c.is_whitespace())
+            .fold(last_char.to_string(), |mut out, c| {
+                out.push(c);
+                out
+            });
     let value = value.trim();
     let Ok(value) = value.parse::<i64>() else {
         panic!(

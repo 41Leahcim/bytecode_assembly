@@ -1,4 +1,8 @@
 use crate::{value::Value, Token};
+use std::{
+    fmt::Write as _,
+    io::{self, Write as _},
+};
 
 pub fn out(output: &str, registers: &[Value]) {
     let mut result = String::new();
@@ -19,18 +23,16 @@ pub fn out(output: &str, registers: &[Value]) {
                 result.push('{');
             } else {
                 match register.parse::<u8>() {
-                    Ok(index) => result += &registers[index as usize].to_string(),
-                    Err(_) => {
-                        result.push('{');
-                        result += &register;
-                    }
+                    Ok(index) => write!(&mut result, "{}", registers[index as usize]).unwrap(),
+                    Err(_) => write!(&mut result, "{{{register}").unwrap(),
                 }
             }
+            register.clear();
         } else {
             result.push(c);
         }
     }
-    print!("{result}");
+    io::stdout().lock().write_all(result.as_bytes()).unwrap();
 }
 
 pub fn execute(tokens: &[Token]) {

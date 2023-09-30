@@ -30,6 +30,10 @@ struct Args {
     /// Whether the tokens should be printed
     #[arg(short, long)]
     debug: bool,
+
+    // Whether to print performance
+    #[arg(short, long)]
+    performance: bool,
 }
 
 fn main() {
@@ -74,14 +78,16 @@ fn main() {
         eprintln!("{tokens:?}");
     }
 
-    println!("Parsing args: {}", (parsing - start).as_secs_f64());
-    if extension == "basm" {
-        println!("Compiling   : {}", (compiling - parsing).as_secs_f64());
-    }
-    if args.run {
-        println!("Executing   : {}", (executing - compiling).as_secs_f64());
-    }
-    if args.out.is_some() {
-        println!("Storing     : {}", (storing - executing).as_secs_f64());
+    if args.performance {
+        println!("Parsing args: {}", (parsing - start).as_secs_f64());
+        if extension == "basm" {
+            println!("Compiling   : {}", (compiling - parsing).as_secs_f64());
+        }
+        if args.run {
+            println!("Executing   : {}", (executing - compiling).as_secs_f64());
+        }
+        if args.out.is_some() {
+            println!("Storing     : {}", (storing - executing).as_secs_f64());
+        }
     }
 }

@@ -163,10 +163,24 @@ pub fn mov(code: &mut Code) -> Token {
             Some(_) => {}
         }
     }
-    let value = code
-        .by_ref()
-        .take_while(|c| !c.is_whitespace())
-        .collect::<String>();
+    let mut last_char = code.next();
+    while last_char.is_some_and(|c| c.is_whitespace()) {
+        if last_char == Some('\n') {
+            panic!("Unexpected End Of Line: {}:{}", code.line(), code.column());
+        }
+        last_char = code.next();
+    }
+    let Some(last_char) = last_char else {
+        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+    };
+    if last_char == '\n' {
+        panic!("Unexpected End Of Line: {}:{}", code.line(), code.column());
+    }
+    let value = last_char.to_string()
+        + &code
+            .by_ref()
+            .take_while(|c| !c.is_whitespace())
+            .collect::<String>();
     let value = value.trim();
     let Ok(value) = value.parse::<i64>() else {
         panic!(

@@ -1,0 +1,2 @@
+mov r0, 19
+out "Value: {0}\n"

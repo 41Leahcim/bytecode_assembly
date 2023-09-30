@@ -31,9 +31,21 @@ struct Args {
     #[arg(short, long)]
     debug: bool,
 
-    // Whether to print performance
+    /// Whether to print performance.
+    /// If you write the output of your code to a file, you can also easily
+    /// see the performance per second.
     #[arg(short, long)]
     performance: bool,
+}
+
+fn test_performance<T: ?Sized, U>(func: fn(&T) -> U, input: &T, action: &str) {
+    let start = Instant::now();
+    let mut iterations: u32 = 0;
+    while start.elapsed().as_secs() < 1 {
+        func(input);
+        iterations += 1;
+    }
+    eprintln!("{action} {iterations} times per second");
 }
 
 fn main() {
@@ -52,6 +64,9 @@ fn main() {
 
     let tokens = if extension == "basm" {
         let code = std::fs::read_to_string(&args.file).expect("Input file doesn't exist");
+        if args.performance {
+            test_performance(compile::split_tokens, code.as_str(), "Compiles");
+        }
 
         compile::split_tokens(&code)
     } else if extension == "basmo" {
@@ -79,6 +94,7 @@ fn main() {
     }
 
     if args.performance {
+        test_performance(execute::execute, &tokens, "Runs");
         println!("Parsing args: {}", (parsing - start).as_secs_f64());
         if extension == "basm" {
             println!("Compiling   : {}", (compiling - parsing).as_secs_f64());

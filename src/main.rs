@@ -1,14 +1,17 @@
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
+use value::Value;
 
 mod compile;
 mod execute;
+mod value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Token {
     Comment(String),
     Out(String),
+    Mov(u8, Value),
 }
 
 #[derive(Debug, Parser)]
@@ -23,6 +26,10 @@ struct Args {
     /// Whether the binary should be run
     #[arg(short, long)]
     run: bool,
+
+    /// Whether the tokens should be printed
+    #[arg(short, long)]
+    debug: bool,
 }
 
 fn main() {
@@ -62,7 +69,10 @@ fn main() {
         postcard::to_io(&tokens, output).expect("Failed to write tokens to output file");
     }
     let storing = Instant::now();
-    eprintln!("{tokens:?}");
+
+    if args.debug {
+        eprintln!("{tokens:?}");
+    }
 
     println!("Parsing args: {}", (parsing - start).as_secs_f64());
     if extension == "basm" {

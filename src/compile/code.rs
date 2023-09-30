@@ -74,11 +74,13 @@ impl Code {
     }
 
     /// Returns the length of the buffer
+    #[allow(unused)]
     pub fn len(&self) -> usize {
         self.buffer.len()
     }
 
     /// Returns the number of bytes read
+    #[allow(unused)]
     pub const fn bytes_read(&self) -> usize {
         self.index
     }

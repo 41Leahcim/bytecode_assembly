@@ -1,3 +1,5 @@
+use crate::value::Value;
+
 use super::Token;
 use code::Code;
 use std::str::FromStr;
@@ -37,7 +39,7 @@ fn read_comment(code: &mut Code) -> Token {
 }
 
 /// Reads a string
-pub fn read_string(code: &mut Code) -> String {
+fn read_string(code: &mut Code) -> String {
     // Create a buffer for the string and a variable to keep track of escaped chars
     let mut result = String::new();
     let mut escaped = false;
@@ -82,9 +84,7 @@ pub fn read_string(code: &mut Code) -> String {
     result
 }
 
-/// Reads output
-pub fn read_out(code: &mut Code) -> Token {
-    // Read all whitespace
+fn skip_whitespace(code: &mut Code) -> Option<char> {
     let mut c = code.next();
     while let Some(ch) = c {
         if !ch.is_whitespace() {
@@ -92,9 +92,14 @@ pub fn read_out(code: &mut Code) -> Token {
         }
         c = code.next();
     }
+    c
+}
 
+/// Reads output
+fn read_out(code: &mut Code) -> Token {
+    // Skip all whitespace
     // Error, if the end of the file was reached
-    let Some(c) = c else {
+    let Some(c) = skip_whitespace(code) else {
         panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
     };
 
@@ -120,6 +125,72 @@ pub fn read_out(code: &mut Code) -> Token {
     Token::Out(output)
 }
 
+pub fn mov(code: &mut Code) -> Token {
+    // Skip the whitespace
+    let Some(c) = skip_whitespace(code) else {
+        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+    };
+
+    if c != 'r' {
+        panic!(
+            "You can only move into registers: {}:{}",
+            code.line(),
+            code.column()
+        );
+    }
+
+    let mut id = String::new();
+    let mut seperator_found = false;
+    for c in code.by_ref() {
+        if c == ',' || c.is_whitespace() {
+            seperator_found = c == ',';
+            break;
+        }
+        id.push(c);
+    }
+    let Ok(id) = id.parse::<u8>() else {
+        panic!(
+            "Invalid register id \"{id}\": {}:{}",
+            code.line(),
+            code.column()
+        );
+    };
+    while !seperator_found {
+        match code.next() {
+            None => panic!("Unexpected End Of File: {}:{}", code.line(), code.column()),
+            Some(',') => seperator_found = true,
+            Some('\n') => panic!("Unexpected End Of Line: {}:{}", code.line(), code.column()),
+            Some(_) => {}
+        }
+    }
+    let value = code
+        .by_ref()
+        .take_while(|c| !c.is_whitespace())
+        .collect::<String>();
+    let value = value.trim();
+    let Ok(value) = value.parse::<i64>() else {
+        panic!(
+            "Invalid value \"{value}\": {}:{}",
+            code.line(),
+            code.column()
+        );
+    };
+    Token::Mov(id, Value::Number(value))
+}
+
+pub fn parse_command(command: &str, code: &mut Code) -> Option<Token> {
+    match command {
+        "" => None,
+        "out" => Some(read_out(code)),
+        "mov" => Some(mov(code)),
+        _ => panic!(
+            "Invalid command \"{command}\" at: {}:{}",
+            code.line(),
+            code.column()
+        ),
+    }
+}
+
 /// Splits the code into tokens
 pub fn split_tokens(code: &str) -> Vec<Token> {
     // Create a new code iterator and a vector for the tokens
@@ -132,18 +203,20 @@ pub fn split_tokens(code: &str) -> Vec<Token> {
     };
 
     // Create a command string
-    let mut command = String::new();
+    let mut command = if last_char.is_whitespace() {
+        String::new()
+    } else {
+        last_char.to_string()
+    };
 
     // Iterate through the code
     while let Some(c) = code.next() {
         if c.is_whitespace() {
             // If the current char is whitespace
             // Try to parse the current command
-            match command.as_str() {
-                "" => {}
-                "out" => tokens.push(read_out(&mut code)),
-                _ => todo!(),
-            }
+            if let Some(token) = parse_command(&command, &mut code) {
+                tokens.push(token);
+            };
 
             // Clear the command
             command.clear();
@@ -162,14 +235,8 @@ pub fn split_tokens(code: &str) -> Vec<Token> {
         last_char = c;
     }
     // Try to parse the current command if the command isn't empty
-    match command.as_str() {
-        "" => {}
-        "out" => tokens.push(read_out(&mut code)),
-        _ => panic!(
-            "Invalid command \"{command}\" at: {}:{}",
-            code.line(),
-            code.column()
-        ),
+    if let Some(token) = parse_command(&command, &mut code) {
+        tokens.push(token);
     }
     tokens
 }

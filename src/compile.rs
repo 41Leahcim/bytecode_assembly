@@ -4,7 +4,7 @@ use super::Token;
 use code::Code;
 use std::str::FromStr;
 
-mod code;
+pub mod code;
 
 /// Reads a multi-line comment
 fn read_comment(code: &mut Code) -> Token {
@@ -125,36 +125,28 @@ fn read_out(code: &mut Code) -> Token {
     Token::Out(output)
 }
 
-pub fn mov(code: &mut Code) -> Token {
+fn read_first_argument(code: &mut Code) -> (Value, char) {
     // Skip the whitespace
     let Some(c) = skip_whitespace(code) else {
         panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
     };
 
-    if c != 'r' {
-        panic!(
-            "You can only move into registers: {}:{}",
-            code.line(),
-            code.column()
-        );
-    }
-
-    let mut id = String::new();
-    let mut seperator_found = false;
+    let mut argument = c.to_string();
+    let mut last_char = c;
     for c in code.by_ref() {
         if c == ',' || c.is_whitespace() {
-            seperator_found = c == ',';
+            last_char = c;
             break;
         }
-        id.push(c);
+        argument.push(c);
+        last_char = c;
     }
-    let Ok(id) = id.parse::<u8>() else {
-        panic!(
-            "Invalid register id \"{id}\": {}:{}",
-            code.line(),
-            code.column()
-        );
-    };
+
+    (Value::from_str(&argument, code), last_char)
+}
+
+fn read_later_argument(code: &mut Code, c: char) -> (Value, char) {
+    let mut seperator_found = c == ',';
     while !seperator_found {
         match code.next() {
             None => panic!("Unexpected End Of File: {}:{}", code.line(), code.column()),
@@ -170,7 +162,7 @@ pub fn mov(code: &mut Code) -> Token {
         }
         last_char = code.next();
     }
-    let Some(last_char) = last_char else {
+    let Some(mut last_char) = last_char else {
         panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
     };
     if last_char == '\n' {
@@ -179,32 +171,33 @@ pub fn mov(code: &mut Code) -> Token {
     let value =
         code.take_while(|c| !c.is_whitespace())
             .fold(last_char.to_string(), |mut out, c| {
+                last_char = c;
                 out.push(c);
                 out
             });
     let value = value.trim();
-    if let Ok(value) = value.parse::<i64>() {
-        Token::Mov(id, Value::Number(value))
-    } else if value.chars().next().is_some_and(|c| c == 'r') {
-        let value = value.chars().skip(1).collect::<String>();
-        let Ok(register) = value.parse::<u8>() else {
-            panic!(
-                "Invalid register id \"{value}\": {}:{}",
-                code.line(),
-                code.column()
-            );
-        };
-        Token::MovR(id, register)
-    } else {
+    (Value::from_str(value, code), c)
+}
+
+fn mov(code: &mut Code) -> Token {
+    let (value, c) = read_first_argument(code);
+
+    let Value::Register(register) = value else {
         panic!(
-            "Invalid value \"{value}\": {}:{}",
+            "You can only move into registers: {}:{}",
             code.line(),
             code.column()
         );
+    };
+
+    let (value, _) = read_later_argument(code, c);
+    match value {
+        Value::Number(value) => Token::Mov(register, Value::Number(value)),
+        Value::Register(register2) => Token::MovR(register, register2),
     }
 }
 
-pub fn parse_command(command: &str, code: &mut Code) -> Option<Token> {
+fn parse_command(command: &str, code: &mut Code) -> Option<Token> {
     match command {
         "" => None,
         "out" => Some(read_out(code)),

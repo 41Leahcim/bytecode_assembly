@@ -1,19 +1,12 @@
 use clap::Parser;
-use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
-use value::Value;
 
 mod compile;
 mod execute;
+mod token;
 mod value;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Token {
-    Comment(String),
-    Out(String),
-    Mov(u8, Value),
-    Add(u8, Value, Value),
-}
+use token::Token;
 
 #[derive(Debug, Parser)]
 struct Args {

@@ -58,4 +58,15 @@ impl Value {
             }
         }
     }
+
+    pub fn sub(&self, other: &Self, registers: &[Self]) -> Self {
+        let left = self.take(registers);
+        let right = other.take(registers);
+        match (left, right) {
+            (Self::Number(number), Self::Number(number2)) => Self::Number(number - number2),
+            (Self::Register(_), _) | (_, Self::Register(_)) => {
+                panic!("Unexpected register during addition");
+            }
+        }
+    }
 }

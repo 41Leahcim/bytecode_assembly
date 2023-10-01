@@ -14,6 +14,7 @@ pub enum Token {
     Mov(u8, Value),
     Add(u8, Value, Value),
     Sub(u8, Value, Value),
+    Mul(u8, Value, Value),
 }
 
 impl Token {
@@ -35,12 +36,21 @@ impl Token {
         Ok(Token::Add(register, arguments[0], arguments[1]))
     }
 
-    /// Reads the add operation, returns the add operation with arguments
+    /// Reads the sub operation, returns the sub operation with arguments
     pub fn sub(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
         let (register, arguments) = read_arguments::<2>(code)?;
 
-        // Return the add operation
+        // Return the sub operation
         Ok(Token::Sub(register, arguments[0], arguments[1]))
+    }
+
+    /// Reads the mul operation, returns the mul operation with arguments
+    pub fn mul(code: &mut Code) -> Result<Token, Error> {
+        // Read the arguments
+        let (register, arguments) = read_arguments::<2>(code)?;
+
+        // Return the mul operation
+        Ok(Token::Mul(register, arguments[0], arguments[1]))
     }
 }

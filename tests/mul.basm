@@ -1,0 +1,8 @@
+mul r0, 1, 2
+out "{0}\n"
+mul r1, r0, 3
+out "{0} {1}\n"
+mul r2, 4, r1
+out "{0} {1} {2}\n"
+mul r3,r2,r2
+out "{0} {1} {2} {3}\n"

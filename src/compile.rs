@@ -124,6 +124,7 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "mov" => Ok(Some(Token::mov(code)?)),
         "add" => Ok(Some(Token::add(code)?)),
         "sub" => Ok(Some(Token::sub(code)?)),
+        "mul" => Ok(Some(Token::mul(code)?)),
         _ => panic!(
             "Invalid command \"{command}\" at: {}:{}",
             code.line(),

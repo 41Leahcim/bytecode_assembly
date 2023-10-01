@@ -68,6 +68,9 @@ pub fn execute(tokens: &[Token]) {
             Token::Sub(id, value, value2) => {
                 registers[*id as usize] = value.sub(value2, &registers)
             }
+            Token::Mul(id, value, value2) => {
+                registers[*id as usize] = value.mul(value2, &registers)
+            }
         }
     }
 }

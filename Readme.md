@@ -18,3 +18,6 @@ The only supported comment is the multi-line comment. This comment starts with `
 ### Output
 To print output, you can use the `out` keyword. It can print strings or any other value. Arguments that aren't strings, will have a new line appended. Strings won't get a new line appended, to support situations where you don't want a new line after output. You can still add a new line yourself, as strings are the only part of the language where escape characters are supported.
 Strings support the following escape characters: `\t`, `\n`, `\r`, `\\`, and `\0`.
+
+## Instructions
+Instructions also called commands, are tokens that can be executed. A token can take 2 types of arguments, namely registers and numbers. Numbers are always 64-bit signed integers. The registers can only hold numbers as values.

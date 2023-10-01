@@ -86,22 +86,23 @@ fn read_string(code: &mut Code) -> Result<String, Error> {
     }
 }
 
-fn skip_whitespace(code: &mut Code) -> Option<char> {
-    let mut c = code.next();
-    while let Some(ch) = c {
-        if !ch.is_whitespace() {
-            break;
+/// Skips all whitespace, but errors on new lines
+fn skip_whitespace(code: &mut Code) -> Result<Option<char>, Error> {
+    let mut last_char = code.next();
+    while last_char.is_some_and(char::is_whitespace) {
+        if last_char == Some('\n') {
+            return Err(Error::end_of_line(code.line(), code.column()));
         }
-        c = code.next();
+        last_char = code.next();
     }
-    c
+    Ok(last_char)
 }
 
 /// Reads output
 fn read_out(code: &mut Code) -> Result<Token, Error> {
     // Skip all whitespace
     // Error, if the end of the file was reached
-    let Some(c) = skip_whitespace(code) else {
+    let Some(c) = skip_whitespace(code)? else {
         return Err(Error::end_of_file(code.line(), code.column()));
     };
 
@@ -127,14 +128,10 @@ fn read_out(code: &mut Code) -> Result<Token, Error> {
     Ok(Token::Out(output))
 }
 
-fn read_first_argument(code: &mut Code) -> Result<(Value, char), Error> {
-    // Skip the whitespace
-    let Some(c) = skip_whitespace(code) else {
-        return Err(Error::end_of_file(code.line(), code.column()));
-    };
-
-    let mut argument = c.to_string();
-    let mut last_char = c;
+/// Reads until the first non-whitespace character.
+/// Returns the last read character, which is either non-whitespace or the last char of the code.
+fn read_until_whitespace(code: &mut Code, mut last_char: char) -> (String, char) {
+    let mut argument = last_char.to_string();
     for c in code.by_ref() {
         if c == ',' || c.is_whitespace() {
             last_char = c;
@@ -143,11 +140,26 @@ fn read_first_argument(code: &mut Code) -> Result<(Value, char), Error> {
         argument.push(c);
         last_char = c;
     }
+    (argument, last_char)
+}
 
+/// Reads the first argument of most operations
+fn read_first_argument(code: &mut Code) -> Result<(Value, char), Error> {
+    // Skip the whitespace
+    let Some(c) = skip_whitespace(code)? else {
+        return Err(Error::end_of_file(code.line(), code.column()));
+    };
+
+    // Read the argument
+    let (argument, last_char) = read_until_whitespace(code, c);
+
+    // Convert the argument to a value and return it with the last read char
     Ok((Value::from_str(&argument, code), last_char))
 }
 
+/// Reads later arguments
 fn read_later_argument(code: &mut Code, c: char) -> Result<(Value, char), Error> {
+    // Look for the first seperator
     let mut seperator_found = c == ',';
     while !seperator_found {
         match code.next() {
@@ -162,35 +174,44 @@ fn read_later_argument(code: &mut Code, c: char) -> Result<(Value, char), Error>
             ),
         }
     }
-    let mut last_char = code.next();
-    while last_char.is_some_and(char::is_whitespace) {
-        if last_char == Some('\n') {
-            return Err(Error::end_of_line(code.line(), code.column()));
-        }
-        last_char = code.next();
-    }
-    let Some(mut last_char) = last_char else {
+
+    // Skip all whitespace
+    let Some(last_char) = skip_whitespace(code)? else {
         return Err(Error::end_of_file(code.line(), code.column()));
     };
-    if last_char == '\n' {
-        return Err(Error::end_of_line(code.line(), code.column()));
-    }
-    let value = code.take_while(|c| !c.is_whitespace() && *c != ',').fold(
-        last_char.to_string(),
-        |mut out, c| {
-            last_char = c;
-            out.push(c);
-            out
-        },
-    );
-    let value = value.trim();
-    Ok((Value::from_str(value, code), c))
+
+    // Read until whitespace or a seperator is found
+    let (value, last_char) = read_until_whitespace(code, last_char);
+
+    // Convert the string to a value and return it with the last read char
+    Ok((Value::from_str(&value, code), last_char))
 }
 
-fn mov(code: &mut Code) -> Result<Token, Error> {
-    let (value, c) = read_first_argument(code)?;
+/// Reads multiple arguments, you should atleast take 1 argument.
+/// Where SIZE is the number of arguments.
+fn read_arguments<const SIZE: usize>(code: &mut Code) -> Result<[Value; SIZE], Error> {
+    let mut arguments = [Value::Number(0); SIZE];
+    assert!(
+        SIZE > 1,
+        "Not enough arguments, minimum = 1, {SIZE} requested"
+    );
+    let (value, mut ch) = read_first_argument(code)?;
+    arguments[0] = value;
+    for arg in arguments.iter_mut().skip(1) {
+        let (value, c) = read_later_argument(code, ch)?;
+        *arg = value;
+        ch = c;
+    }
+    Ok(arguments)
+}
 
-    let Value::Register(register) = value else {
+/// Reads the arguments of the move operation and returns the operation with arguments
+fn mov(code: &mut Code) -> Result<Token, Error> {
+    // Read the arguments
+    let arguments = read_arguments::<2>(code)?;
+
+    // Make sure the first argument is a register, as it's only possible to move data into registers
+    let Value::Register(register) = arguments[0] else {
         panic!(
             "You can only move into registers: {}:{}",
             code.line(),
@@ -198,31 +219,29 @@ fn mov(code: &mut Code) -> Result<Token, Error> {
         );
     };
 
-    let (value, _) = read_later_argument(code, c)?;
-    Ok(Token::Mov(register, value))
+    // Return the instruction
+    Ok(Token::Mov(register, arguments[1]))
 }
 
-fn three_operands(code: &mut Code) -> Result<(u8, Value, Value), Error> {
-    let (value, c) = read_first_argument(code)?;
+/// Reads the add operation, returns the add operation with arguments
+fn add(code: &mut Code) -> Result<Token, Error> {
+    // Read the arguments
+    let arguments = read_arguments::<3>(code)?;
 
-    let Value::Register(register) = value else {
+    // Make sure the first argument is a register
+    let Value::Register(register) = arguments[0] else {
         panic!(
-            "You can only add into registers: {}:{}",
+            "You can only move into registers: {}:{}",
             code.line(),
             code.column()
         );
     };
 
-    let (value, c) = read_later_argument(code, c)?;
-    let (value2, _) = read_later_argument(code, c)?;
-    Ok((register, value, value2))
+    // Return the add operation
+    Ok(Token::Add(register, arguments[1], arguments[2]))
 }
 
-fn add(code: &mut Code) -> Result<Token, Error> {
-    let (register, value, value2) = three_operands(code)?;
-    Ok(Token::Add(register, value, value2))
-}
-
+/// Parses the passed command
 fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error> {
     match command {
         "" => Ok(None),

@@ -55,9 +55,10 @@ fn main() {
     let args = Args::parse();
     let parsing = Instant::now();
 
-    if args.out.is_none() && !args.run {
-        panic!("The bytecode should be run and/or saved!");
-    }
+    assert!(
+        args.out.is_none() && !args.run,
+        "The bytecode should be run and/or saved!"
+    );
 
     let Some(extension) = args.file.extension() else {
         panic!("Extension of input file missing");
@@ -69,7 +70,7 @@ fn main() {
             test_performance(compile::split_tokens, code.as_str(), "Compiles");
         }
 
-        compile::split_tokens(&code)
+        compile::split_tokens(&code).unwrap()
     } else if extension == "basmo" {
         let code = std::fs::read(&args.file).expect("Input file doesn't exist");
         postcard::from_bytes::<Vec<Token>>(&code).expect("Invalid basmo input file.")

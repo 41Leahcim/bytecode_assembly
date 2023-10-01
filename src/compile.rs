@@ -2,18 +2,20 @@ use crate::value::Value;
 
 use super::Token;
 use code::Code;
+use error::Error;
 use std::str::FromStr;
 
 pub mod code;
+pub mod error;
 
 /// Reads a multi-line comment
-fn read_comment(code: &mut Code) -> Token {
+fn read_comment(code: &mut Code) -> Result<Token, Error> {
     // Create a buffer for the string content
     let mut comment = String::new();
 
     // Read the first char of the string, error if EOF is reached
     let Some(mut last_char) = code.next() else {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_file(code.line(), code.column()));
     };
 
     // Iterate over the chars in the comment
@@ -21,9 +23,8 @@ fn read_comment(code: &mut Code) -> Token {
         // Stop reading if the end of the comment was reached
         if last_char == '*' && c == '/' {
             break;
-        } else {
-            comment.push(last_char);
         }
+        comment.push(last_char);
 
         // Store the current char as last char
         last_char = c;
@@ -31,15 +32,15 @@ fn read_comment(code: &mut Code) -> Token {
 
     // Error, if the end of the code was reached before the comment was closed
     if code.eof() {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_file(code.line(), code.column()));
     }
 
     // Return the read comment
-    Token::Comment(comment)
+    Ok(Token::Comment(comment))
 }
 
 /// Reads a string
-fn read_string(code: &mut Code) -> String {
+fn read_string(code: &mut Code) -> Result<String, Error> {
     // Create a buffer for the string and a variable to keep track of escaped chars
     let mut result = String::new();
     let mut escaped = false;
@@ -79,9 +80,10 @@ fn read_string(code: &mut Code) -> String {
 
     // Error, if the end of the code is reached before finding a double quote
     if code.eof() {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        Err(Error::end_of_file(code.line(), code.column()))
+    } else {
+        Ok(result)
     }
-    result
 }
 
 fn skip_whitespace(code: &mut Code) -> Option<char> {
@@ -96,17 +98,17 @@ fn skip_whitespace(code: &mut Code) -> Option<char> {
 }
 
 /// Reads output
-fn read_out(code: &mut Code) -> Token {
+fn read_out(code: &mut Code) -> Result<Token, Error> {
     // Skip all whitespace
     // Error, if the end of the file was reached
     let Some(c) = skip_whitespace(code) else {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_file(code.line(), code.column()));
     };
 
     // If the current char is a double quote, the value is a string
     // Read the string and return it in an output token
     if c == '"' {
-        return Token::Out(read_string(code));
+        return Ok(Token::Out(read_string(code)?));
     }
 
     // Convert the current char to a string
@@ -122,13 +124,13 @@ fn read_out(code: &mut Code) -> Token {
 
     // Add a new line and return an output token with the resulting string
     output.push('\n');
-    Token::Out(output)
+    Ok(Token::Out(output))
 }
 
-fn read_first_argument(code: &mut Code) -> (Value, char) {
+fn read_first_argument(code: &mut Code) -> Result<(Value, char), Error> {
     // Skip the whitespace
     let Some(c) = skip_whitespace(code) else {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_file(code.line(), code.column()));
     };
 
     let mut argument = c.to_string();
@@ -142,31 +144,36 @@ fn read_first_argument(code: &mut Code) -> (Value, char) {
         last_char = c;
     }
 
-    (Value::from_str(&argument, code), last_char)
+    Ok((Value::from_str(&argument, code), last_char))
 }
 
-fn read_later_argument(code: &mut Code, c: char) -> (Value, char) {
+fn read_later_argument(code: &mut Code, c: char) -> Result<(Value, char), Error> {
     let mut seperator_found = c == ',';
     while !seperator_found {
         match code.next() {
-            None => panic!("Unexpected End Of File: {}:{}", code.line(), code.column()),
+            None => return Err(Error::end_of_file(code.line(), code.column())),
             Some(',') => seperator_found = true,
-            Some('\n') => panic!("Unexpected End Of Line: {}:{}", code.line(), code.column()),
-            Some(_) => {}
+            Some('\n') => return Err(Error::end_of_line(code.line(), code.column())),
+            Some(c) if c.is_whitespace() => {}
+            Some(c) => panic!(
+                "Unexpected character \"{c}\": {}:{}",
+                code.line(),
+                code.column()
+            ),
         }
     }
     let mut last_char = code.next();
-    while last_char.is_some_and(|c| c.is_whitespace()) {
+    while last_char.is_some_and(char::is_whitespace) {
         if last_char == Some('\n') {
-            panic!("Unexpected End Of Line: {}:{}", code.line(), code.column());
+            return Err(Error::end_of_line(code.line(), code.column()));
         }
         last_char = code.next();
     }
     let Some(mut last_char) = last_char else {
-        panic!("Unexpected End Of File: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_file(code.line(), code.column()));
     };
     if last_char == '\n' {
-        panic!("Unexpected End Of Line: {}:{}", code.line(), code.column());
+        return Err(Error::end_of_line(code.line(), code.column()));
     }
     let value =
         code.take_while(|c| !c.is_whitespace())
@@ -176,11 +183,11 @@ fn read_later_argument(code: &mut Code, c: char) -> (Value, char) {
                 out
             });
     let value = value.trim();
-    (Value::from_str(value, code), c)
+    Ok((Value::from_str(value, code), c))
 }
 
-fn mov(code: &mut Code) -> Token {
-    let (value, c) = read_first_argument(code);
+fn mov(code: &mut Code) -> Result<Token, Error> {
+    let (value, c) = read_first_argument(code)?;
 
     let Value::Register(register) = value else {
         panic!(
@@ -190,18 +197,18 @@ fn mov(code: &mut Code) -> Token {
         );
     };
 
-    let (value, _) = read_later_argument(code, c);
+    let (value, _) = read_later_argument(code, c)?;
     match value {
-        Value::Number(value) => Token::Mov(register, Value::Number(value)),
-        Value::Register(register2) => Token::MovR(register, register2),
+        Value::Number(value) => Ok(Token::Mov(register, Value::Number(value))),
+        Value::Register(register2) => Ok(Token::MovR(register, register2)),
     }
 }
 
-fn parse_command(command: &str, code: &mut Code) -> Option<Token> {
+fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error> {
     match command {
-        "" => None,
-        "out" => Some(read_out(code)),
-        "mov" => Some(mov(code)),
+        "" => Ok(None),
+        "out" => Ok(Some(read_out(code)?)),
+        "mov" => Ok(Some(mov(code)?)),
         _ => panic!(
             "Invalid command \"{command}\" at: {}:{}",
             code.line(),
@@ -211,14 +218,14 @@ fn parse_command(command: &str, code: &mut Code) -> Option<Token> {
 }
 
 /// Splits the code into tokens
-pub fn split_tokens(code: &str) -> Vec<Token> {
+pub fn split_tokens(code: &str) -> Result<Vec<Token>, Error> {
     // Create a new code iterator and a vector for the tokens
     let mut code = Code::from_str(code).unwrap();
     let mut tokens = Vec::new();
 
     // If the code is empty, return the empty vector
     let Some(mut last_char) = code.next() else {
-        return tokens;
+        return Ok(tokens);
     };
 
     // Create a command string
@@ -233,7 +240,7 @@ pub fn split_tokens(code: &str) -> Vec<Token> {
         if c.is_whitespace() {
             // If the current char is whitespace
             // Try to parse the current command
-            if let Some(token) = parse_command(&command, &mut code) {
+            if let Some(token) = parse_command(&command, &mut code)? {
                 tokens.push(token);
             };
 
@@ -242,7 +249,7 @@ pub fn split_tokens(code: &str) -> Vec<Token> {
         } else if last_char == '/' && c == '*' {
             // Else if the last and current char form the start of a comment
             // Try to push the comment to the token vector
-            tokens.push(read_comment(&mut code));
+            tokens.push(read_comment(&mut code)?);
 
             // Clear the command
             command.clear();
@@ -254,8 +261,8 @@ pub fn split_tokens(code: &str) -> Vec<Token> {
         last_char = c;
     }
     // Try to parse the current command if the command isn't empty
-    if let Some(token) = parse_command(&command, &mut code) {
+    if let Some(token) = parse_command(&command, &mut code)? {
         tokens.push(token);
     }
-    tokens
+    Ok(tokens)
 }

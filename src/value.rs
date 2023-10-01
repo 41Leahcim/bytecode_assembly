@@ -17,18 +17,19 @@ impl std::fmt::Display for Value {
 
 impl Value {
     pub fn from_str(value: &str, code: &Code) -> Self {
-        if value.chars().next().is_some_and(|c| c == 'r') {
+        if value.starts_with('r') {
             let register = value.chars().skip(1).collect::<String>();
             let register = register.trim();
-            if let Ok(register) = register.parse::<u8>() {
-                Self::Register(register)
-            } else {
-                panic!(
-                    "Invalid register id \"{register}\": {}:{}",
-                    code.line(),
-                    code.column()
-                );
-            }
+            register.parse::<u8>().map_or_else(
+                |_| {
+                    panic!(
+                        "Invalid register id \"{register}\": {}:{}",
+                        code.line(),
+                        code.column()
+                    )
+                },
+                Self::Register,
+            )
         } else if let Ok(number) = value.parse::<i64>() {
             Self::Number(number)
         } else {

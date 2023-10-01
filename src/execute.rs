@@ -43,8 +43,10 @@ pub fn execute(tokens: &[Token]) {
         match token {
             Token::Comment(_) => {}
             Token::Out(output) => out(output, &registers),
-            Token::Mov(id, value) => registers[*id as usize] = *value,
-            Token::MovR(id, id2) => registers[*id as usize] = registers[*id2 as usize],
+            Token::Mov(id, value) => registers[*id as usize] = value.take(&registers),
+            Token::Add(id, value, value2) => {
+                registers[*id as usize] = value.add(value2, &registers)
+            }
         }
     }
 }

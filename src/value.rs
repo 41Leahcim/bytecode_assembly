@@ -40,4 +40,22 @@ impl Value {
             );
         }
     }
+
+    pub fn take(&self, registers: &[Self]) -> Self {
+        match self {
+            Value::Register(register) => registers[*register as usize],
+            value => *value,
+        }
+    }
+
+    pub fn add(&self, other: &Self, registers: &[Self]) -> Self {
+        let left = self.take(registers);
+        let right = other.take(registers);
+        match (left, right) {
+            (Self::Number(number), Self::Number(number2)) => Self::Number(number + number2),
+            (Self::Register(_), _) | (_, Self::Register(_)) => {
+                panic!("Unexpected register during addition");
+            }
+        }
+    }
 }

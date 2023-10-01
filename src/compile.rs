@@ -175,13 +175,14 @@ fn read_later_argument(code: &mut Code, c: char) -> Result<(Value, char), Error>
     if last_char == '\n' {
         return Err(Error::end_of_line(code.line(), code.column()));
     }
-    let value =
-        code.take_while(|c| !c.is_whitespace())
-            .fold(last_char.to_string(), |mut out, c| {
-                last_char = c;
-                out.push(c);
-                out
-            });
+    let value = code.take_while(|c| !c.is_whitespace() && *c != ',').fold(
+        last_char.to_string(),
+        |mut out, c| {
+            last_char = c;
+            out.push(c);
+            out
+        },
+    );
     let value = value.trim();
     Ok((Value::from_str(value, code), c))
 }
@@ -198,10 +199,23 @@ fn mov(code: &mut Code) -> Result<Token, Error> {
     };
 
     let (value, _) = read_later_argument(code, c)?;
-    match value {
-        Value::Number(value) => Ok(Token::Mov(register, Value::Number(value))),
-        Value::Register(register2) => Ok(Token::MovR(register, register2)),
-    }
+    Ok(Token::Mov(register, value))
+}
+
+fn add(code: &mut Code) -> Result<Token, Error> {
+    let (value, c) = read_first_argument(code)?;
+
+    let Value::Register(register) = value else {
+        panic!(
+            "You can only add into registers: {}:{}",
+            code.line(),
+            code.column()
+        );
+    };
+
+    let (value, c) = read_later_argument(code, c)?;
+    let (value2, _) = read_later_argument(code, c)?;
+    Ok(Token::Add(register, value, value2))
 }
 
 fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error> {
@@ -209,6 +223,7 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "" => Ok(None),
         "out" => Ok(Some(read_out(code)?)),
         "mov" => Ok(Some(mov(code)?)),
+        "add" => Ok(Some(add(code)?)),
         _ => panic!(
             "Invalid command \"{command}\" at: {}:{}",
             code.line(),

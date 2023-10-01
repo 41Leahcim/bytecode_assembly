@@ -202,7 +202,7 @@ fn mov(code: &mut Code) -> Result<Token, Error> {
     Ok(Token::Mov(register, value))
 }
 
-fn add(code: &mut Code) -> Result<Token, Error> {
+fn three_operands(code: &mut Code) -> Result<(u8, Value, Value), Error> {
     let (value, c) = read_first_argument(code)?;
 
     let Value::Register(register) = value else {
@@ -215,6 +215,11 @@ fn add(code: &mut Code) -> Result<Token, Error> {
 
     let (value, c) = read_later_argument(code, c)?;
     let (value2, _) = read_later_argument(code, c)?;
+    Ok((register, value, value2))
+}
+
+fn add(code: &mut Code) -> Result<Token, Error> {
+    let (register, value, value2) = three_operands(code)?;
     Ok(Token::Add(register, value, value2))
 }
 

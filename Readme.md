@@ -21,3 +21,10 @@ Strings support the following escape characters: `\t`, `\n`, `\r`, `\\`, and `\0
 
 ## Instructions
 Instructions also called commands, are tokens that can be executed. A token can take 2 types of arguments, namely registers and numbers. Numbers are always 64-bit signed integers. The registers can only hold numbers as values.
+The following table is an overview of all available instructions, their arguments, and what the equivalent in other programming languages. Ra means register a, which could be r0 up to and including r255. Other letters in the arguments mean they could be any valid type of argument.
+|Instrution|arguments|in pseudocode|
+|-|-|-|
+|mov|ra, v|a = v|
+|add|ra, b, c|a = b + c|
+|sub|ra, b, c|a = b - c|
+|mul|ra, b, c|a = b * c|

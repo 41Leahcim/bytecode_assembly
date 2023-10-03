@@ -63,13 +63,20 @@ pub fn execute(tokens: &[Token]) {
             Token::Out(output) => out(output, &registers),
             Token::Mov(id, value) => registers[*id as usize] = value.take(&registers),
             Token::Add(id, value, value2) => {
-                registers[*id as usize] = value.add(value2, &registers)
+                registers[*id as usize] =
+                    value.perform_operation(value2, &registers, i64::wrapping_add)
             }
             Token::Sub(id, value, value2) => {
-                registers[*id as usize] = value.sub(value2, &registers)
+                registers[*id as usize] =
+                    value.perform_operation(value2, &registers, i64::wrapping_sub)
             }
             Token::Mul(id, value, value2) => {
-                registers[*id as usize] = value.mul(value2, &registers)
+                registers[*id as usize] =
+                    value.perform_operation(value2, &registers, i64::wrapping_mul)
+            }
+            Token::Div(id, value, value2) => {
+                registers[*id as usize] =
+                    value.perform_operation(value2, &registers, i64::wrapping_div)
             }
         }
     }

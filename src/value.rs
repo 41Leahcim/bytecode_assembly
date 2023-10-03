@@ -59,49 +59,22 @@ impl Value {
         }
     }
 
-    /// Tries to perform an addition operation
-    pub fn add(&self, other: &Self, registers: &[Self]) -> Self {
+    /// Performs a simple operation on 2 operands
+    pub fn perform_operation(
+        &self,
+        other: &Self,
+        registers: &[Self],
+        operation: impl FnOnce(i64, i64) -> i64,
+    ) -> Self {
         // Take the value of both values, so we only add the actual values
         let left = self.take(registers);
         let right = other.take(registers);
 
         match (left, right) {
             // If the values are numbers, add the numbers
-            (Self::Number(number), Self::Number(number2)) => Self::Number(number + number2),
-
-            // If any of the values is still a register, panic
-            (Self::Register(_), _) | (_, Self::Register(_)) => {
-                panic!("Unexpected register during addition");
+            (Self::Number(number), Self::Number(number2)) => {
+                Self::Number(operation(number, number2))
             }
-        }
-    }
-
-    /// Tries to perform an subtraction operation
-    pub fn sub(&self, other: &Self, registers: &[Self]) -> Self {
-        // Take the value of both values, so we only subtract the actual values
-        let left = self.take(registers);
-        let right = other.take(registers);
-
-        match (left, right) {
-            // If the values are numbers, subtract the numbers
-            (Self::Number(number), Self::Number(number2)) => Self::Number(number - number2),
-
-            // If any of the values is still a register, panic
-            (Self::Register(_), _) | (_, Self::Register(_)) => {
-                panic!("Unexpected register during addition");
-            }
-        }
-    }
-
-    /// Tries to perform an multiplication operation
-    pub fn mul(&self, other: &Self, registers: &[Self]) -> Self {
-        // Take the value of both values, so we only multiply the actual values
-        let left = self.take(registers);
-        let right = other.take(registers);
-
-        match (left, right) {
-            // If the values are numbers, multiply the numbers
-            (Self::Number(number), Self::Number(number2)) => Self::Number(number * number2),
 
             // If any of the values is still a register, panic
             (Self::Register(_), _) | (_, Self::Register(_)) => {

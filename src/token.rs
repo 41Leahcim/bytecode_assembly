@@ -15,6 +15,7 @@ pub enum Token {
     Add(u8, Value, Value),
     Sub(u8, Value, Value),
     Mul(u8, Value, Value),
+    Div(u8, Value, Value),
 }
 
 impl Token {
@@ -52,5 +53,14 @@ impl Token {
 
         // Return the mul operation
         Ok(Token::Mul(register, arguments[0], arguments[1]))
+    }
+
+    /// Reads the div operation, returns the div operation with arguments
+    pub fn div(code: &mut Code) -> Result<Token, Error> {
+        // Read the arguments
+        let (register, arguments) = read_arguments::<2>(code)?;
+
+        // Return the mul operation
+        Ok(Token::Div(register, arguments[0], arguments[1]))
     }
 }

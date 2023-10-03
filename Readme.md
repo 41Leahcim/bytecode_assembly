@@ -28,3 +28,4 @@ The following table is an overview of all available instructions, their argument
 |add|ra, b, c|a = b + c|
 |sub|ra, b, c|a = b - c|
 |mul|ra, b, c|a = b * c|
+|div|ra, b, c|a = b / c|

@@ -16,6 +16,9 @@ pub enum Token {
     Sub(u8, Value, Value),
     Mul(u8, Value, Value),
     Div(u8, Value, Value),
+    Mod(u8, Value, Value),
+    Label(String),
+    Jmp(String),
 }
 
 impl Token {
@@ -60,7 +63,16 @@ impl Token {
         // Read the arguments
         let (register, arguments) = read_arguments::<2>(code)?;
 
-        // Return the mul operation
+        // Return the div operation
         Ok(Token::Div(register, arguments[0], arguments[1]))
+    }
+
+    /// Reads the mod operation, returns the mod operation with arguments
+    pub fn modulo(code: &mut Code) -> Result<Token, Error> {
+        // Read the arguments
+        let (register, arguments) = read_arguments::<2>(code)?;
+
+        // Return the mod operation
+        Ok(Token::Mod(register, arguments[0], arguments[1]))
     }
 }

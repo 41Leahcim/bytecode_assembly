@@ -1,7 +1,9 @@
 use crate::{value::Value, Token};
 use std::{
+    collections::HashMap,
     fmt::Write as _,
     io::{self, Write as _},
+    time::Instant,
 };
 
 /// Executes the output command
@@ -50,13 +52,30 @@ pub fn out(output: &str, registers: &[Value]) {
     io::stdout().lock().write_all(result.as_bytes()).unwrap();
 }
 
+fn read_labels(tokens: &[Token]) -> HashMap<String, usize> {
+    tokens
+        .iter()
+        .enumerate()
+        .filter_map(|(index, label)| {
+            if let Token::Label(label) = label {
+                Some((label.to_owned(), index))
+            } else {
+                None
+            }
+        })
+        .collect::<HashMap<_, _>>()
+}
+
 /// Executes the tokens
 pub fn execute(tokens: &[Token]) {
     // Create and initialize the registers
     let mut registers = [Value::Number(0); 256];
+    let labels = read_labels(tokens);
+    let mut index = 0;
+    let start = Instant::now();
 
     // Iterate through the tokens
-    for token in tokens {
+    while let Some(token) = tokens.get(index) {
         // Execute the current token
         match token {
             Token::Comment(_) => {}
@@ -78,6 +97,16 @@ pub fn execute(tokens: &[Token]) {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_div)
             }
+            Token::Mod(id, value, value2) => {
+                registers[*id as usize] =
+                    value.perform_operation(value2, &registers, i64::wrapping_rem)
+            }
+            Token::Label(_) => {}
+            Token::Jmp(label) => index = *labels.get(label).unwrap(),
+        }
+        index += 1;
+        if start.elapsed().as_secs() > 0 {
+            break;
         }
     }
 }

@@ -116,6 +116,23 @@ fn read_out(code: &mut Code) -> Result<Token, Error> {
     Ok(Token::Out(output))
 }
 
+/// Reads labels for branching
+fn read_jmp_label(code: &mut Code) -> Result<String, Error> {
+    // Skip all whitespace
+    let Some(c) = skip_whitespace(code)? else {
+        return Err(Error::end_of_file(code.line(), code.column()));
+    };
+
+    // Read the label
+    let label = code
+        .take_while(|c| !c.is_whitespace())
+        .fold(c.to_string(), |mut label, c| {
+            label.push(c);
+            label
+        });
+    Ok(label)
+}
+
 /// Parses the passed command
 fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error> {
     match command {
@@ -126,6 +143,19 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "sub" => Ok(Some(Token::sub(code)?)),
         "mul" => Ok(Some(Token::mul(code)?)),
         "div" => Ok(Some(Token::div(code)?)),
+        "mod" => Ok(Some(Token::modulo(code)?)),
+        "jmp" => Ok(Some(Token::Jmp(read_jmp_label(code)?))),
+        label if label.ends_with(':') => {
+            let label_name = label.chars().take_while(|c| *c != ':').collect::<String>();
+            if label.len() != label_name.len() + 1 {
+                panic!(
+                    "Invalid label \"{command}\" at: {}:{}",
+                    code.line(),
+                    code.column()
+                );
+            }
+            Ok(Some(Token::Label(label_name)))
+        }
         _ => panic!(
             "Invalid command \"{command}\" at: {}:{}",
             code.line(),

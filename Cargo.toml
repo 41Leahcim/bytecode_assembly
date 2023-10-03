@@ -13,6 +13,7 @@ repository = "https://github.com/41Leahcim/bytecode_assembly"
 lto = true
 opt-level = 'z'
 codegen-units = 1
+debug = true
 
 [dependencies]
 clap = { version = "4.4.5", features = ["derive"] }

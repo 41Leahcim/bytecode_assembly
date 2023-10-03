@@ -1,9 +1,8 @@
-use crate::{value::Value, Token};
+use crate::{token::Label, value::Value, Token};
 use std::{
     collections::HashMap,
     fmt::Write as _,
     io::{self, Write as _},
-    time::Instant,
 };
 
 /// Executes the output command
@@ -67,15 +66,19 @@ fn read_labels(tokens: &[Token]) -> HashMap<String, usize> {
 }
 
 /// Executes the tokens
-pub fn execute(tokens: &[Token]) {
+pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
     // Create and initialize the registers
     let mut registers = [Value::Number(0); 256];
     let labels = read_labels(tokens);
     let mut index = 0;
-    let start = Instant::now();
 
     // Iterate through the tokens
     while let Some(token) = tokens.get(index) {
+        cycles = cycles.map(|cycles| cycles - 1);
+        if cycles.is_some_and(|cycles| cycles == 0) {
+            break;
+        }
+
         // Execute the current token
         match token {
             Token::Comment(_) => {}
@@ -102,11 +105,9 @@ pub fn execute(tokens: &[Token]) {
                     value.perform_operation(value2, &registers, i64::wrapping_rem)
             }
             Token::Label(_) => {}
-            Token::Jmp(label) => index = *labels.get(label).unwrap(),
+            Token::Jmp(Label::Base(label)) => index = *labels.get(label).unwrap(),
+            Token::Jmp(Label::Address(address)) => index = *address,
         }
         index += 1;
-        if start.elapsed().as_secs() > 0 {
-            break;
-        }
     }
 }

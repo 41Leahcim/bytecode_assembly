@@ -1,9 +1,9 @@
-use crate::token::argument::skip_whitespace;
+use crate::token::{argument::skip_whitespace, Label};
 
 use super::Token;
 use code::Code;
 use error::Error;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 pub mod code;
 pub mod error;
@@ -144,7 +144,7 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "mul" => Ok(Some(Token::mul(code)?)),
         "div" => Ok(Some(Token::div(code)?)),
         "mod" => Ok(Some(Token::modulo(code)?)),
-        "jmp" => Ok(Some(Token::Jmp(read_jmp_label(code)?))),
+        "jmp" => Ok(Some(Token::Jmp(Label::Base(read_jmp_label(code)?)))),
         label if label.ends_with(':') => {
             let label_name = label.chars().take_while(|c| *c != ':').collect::<String>();
             if label.len() != label_name.len() + 1 {
@@ -212,4 +212,35 @@ pub fn split_tokens(code: &str) -> Result<Vec<Token>, Error> {
         tokens.push(token);
     }
     Ok(tokens)
+}
+
+fn read_labels(tokens: &[Token]) -> HashMap<String, usize> {
+    tokens
+        .iter()
+        .enumerate()
+        .filter_map(|(index, label)| {
+            if let Token::Label(label) = label {
+                Some((label.to_owned(), index))
+            } else {
+                None
+            }
+        })
+        .collect::<HashMap<_, _>>()
+}
+
+pub fn convert_labels(tokens: &mut [Token]) {
+    let labels = read_labels(tokens);
+    for token in tokens {
+        #[allow(clippy::single_match)]
+        match token {
+            Token::Jmp(Label::Base(label)) => {
+                *token = Token::Jmp(Label::Address(
+                    *labels
+                        .get(label)
+                        .unwrap_or_else(|| panic!("Label \"{label}\" doesn't exist")),
+                ))
+            }
+            _ => {}
+        }
+    }
 }

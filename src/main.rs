@@ -28,20 +28,10 @@ struct Args {
     /// Whether to print performance.
     #[arg(short, long)]
     performance: bool,
-}
 
-/// Tests the performance of a function
-fn test_performance<T: ?Sized, U>(func: fn(&T) -> U, input: &T, action: &str) {
-    // Count how many times the function can be called in a second
-    let start = Instant::now();
-    let mut iterations: u32 = 0;
-    while start.elapsed().as_secs() < 1 {
-        func(input);
-        iterations += 1;
-    }
-
-    // Print the result
-    eprintln!("{action} {iterations} times per second");
+    // The maximum number of cycles to run
+    #[arg(short, long)]
+    cycles: Option<usize>,
 }
 
 fn load_bytecode(args: &Args) -> Vec<Token> {
@@ -82,24 +72,7 @@ fn print_performance(
     executing: Instant,
     storing: Instant,
     args: &Args,
-    tokens: &[Token],
 ) {
-    // Test execution performance
-    test_performance(execute::execute, tokens, "Runs");
-
-    // Test compilation performance for basm files
-    if args
-        .file
-        .extension()
-        .is_some_and(|extension| extension == "basm")
-    {
-        test_performance(
-            compile::split_tokens,
-            &std::fs::read_to_string(&args.file).unwrap(),
-            "Compiles",
-        )
-    }
-
     // Print parsing performance
     eprintln!("Parsing args: {}", (parsing - start).as_secs_f64());
 
@@ -137,12 +110,13 @@ fn main() {
         "The bytecode should be run and/or saved!"
     );
 
-    let tokens = load_bytecode(&args);
+    let mut tokens = load_bytecode(&args);
+    compile::convert_labels(&mut tokens);
     let compiling = Instant::now();
 
     // Run the code if requested
     if args.run {
-        execute::execute(&tokens);
+        execute::execute(&tokens, args.cycles);
     }
     let executing = Instant::now();
 
@@ -161,8 +135,6 @@ fn main() {
 
     // Test performance if requested
     if args.performance {
-        print_performance(
-            start, parsing, compiling, executing, storing, &args, &tokens,
-        );
+        print_performance(start, parsing, compiling, executing, storing, &args);
     }
 }

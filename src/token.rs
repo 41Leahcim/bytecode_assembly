@@ -18,7 +18,13 @@ pub enum Token {
     Div(u8, Value, Value),
     Mod(u8, Value, Value),
     Label(String),
-    Jmp(String),
+    Jmp(Label),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Label {
+    Base(String),
+    Address(usize),
 }
 
 impl Token {

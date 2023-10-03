@@ -74,10 +74,13 @@ pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
 
     // Iterate through the tokens
     while let Some(token) = tokens.get(index) {
-        cycles = cycles.map(|cycles| cycles - 1);
+        // Stop, if the number cycles to execute reached 0
         if cycles.is_some_and(|cycles| cycles == 0) {
             break;
         }
+
+        // Decrement the number of cycles
+        cycles = cycles.map(|cycles| cycles - 1);
 
         // Execute the current token
         match token {

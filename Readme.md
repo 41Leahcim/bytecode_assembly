@@ -21,7 +21,7 @@ Strings support the following escape characters: `\t`, `\n`, `\r`, `\\`, and `\0
 
 ## Instructions
 Instructions also called commands, are tokens that can be executed. A token can take 2 types of arguments, namely registers and numbers. Numbers are always 64-bit signed integers. The registers can only hold numbers as values.
-The following table is an overview of all available instructions, their arguments, and what the equivalent in other programming languages. Ra means register a, which could be r0 up to and including r255. Other letters in the arguments mean they could be any valid type of argument.
+The following table is an overview of all available instructions, their arguments, and what the equivalent in other programming languages. Ra means register a, which could be r0 up to and including r255. Other letters in the arguments mean they could be any valid type of argument. If there is an s instead of an operand name, it means the result is stored in a status flag.
 |Instrution|arguments|in pseudocode|
 |-|-|-|
 |mov|ra, v|a = v|
@@ -30,6 +30,7 @@ The following table is an overview of all available instructions, their argument
 |mul|ra, b, c|a = b * c|
 |div|ra, b, c|a = b / c|
 |mod|ra, b, c|a = b % c|
+|cmp|a, b|s = a - b|
 
 ### Branching
 Branching is the way of moving to a different part of the code in Assembly. In other languages you usually use if-statements or loops instead, though languages like C and C++ also support goto. To mark a part of the code as a point to jump to, you have to put a label just before that point. A label is written as `label:` where label could be replaced with any group of characters without whitespace.

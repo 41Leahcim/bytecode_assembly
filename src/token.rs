@@ -22,6 +22,7 @@ pub enum Token {
     Jmp(Label),
     Jl(Label),
     Jg(Label),
+    Je(Label),
     Cmp(Value, Value),
 }
 

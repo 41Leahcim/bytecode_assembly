@@ -129,7 +129,10 @@ pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
             Token::Jg(label) if comparison == Ordering::Greater => {
                 index = label_to_address(label, &labels)
             }
-            Token::Jl(_) | Token::Jg(_) => {}
+            Token::Je(label) if comparison == Ordering::Equal => {
+                index = label_to_address(label, &labels)
+            }
+            Token::Jl(_) | Token::Jg(_) | Token::Je(_) => {}
             Token::Cmp(left, right) => comparison = left.compare(right, &registers),
         }
         index += 1;

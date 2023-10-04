@@ -1,0 +1,35 @@
+    /* Print the first 2 primes manually */
+    out "2\n3\n"
+
+    /* Assign the next prime (odd number) to register 0 */
+    mov r0, 5
+outer_loop:
+    /* Assign register 1 the first odd number higher than 1 */
+    mov r1, 3
+checking:
+    /* Calculate the remainder when you dividing the value of r0 by that of r1 */
+    mod r2, r0, r1
+
+    /* Jump to "increment:" if the remainder is 0 */
+    je increment
+
+    /* Add 2 to the value of r1 */
+    add r1, r1, 2
+
+    /* Compare the value of r1 to the value of r0 */
+    cmp r1, r0
+
+    /* Jump to the start of the loop, if it's lower */
+    jl checking
+
+    /* Print the value of r0 and exit the loop otherwise */
+    out "{0}\n"
+increment:
+    /* Add 2 to the value of register 0 */
+    add r0, r0, 2
+
+    /* Compare the value of r0 to the maximum value to check */
+    cmp r0, 100000
+
+    /* Jump to "outer_loop:" if it's lower */
+    jl outer_loop

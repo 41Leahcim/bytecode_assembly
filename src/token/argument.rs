@@ -86,7 +86,7 @@ pub fn read_arguments<const SIZE: usize>(code: &mut Code) -> Result<[Value; SIZE
     arguments[0] = value;
 
     // Read arguments
-    for arg in arguments.iter_mut() {
+    for arg in arguments.iter_mut().skip(1) {
         let (value, c) = read_later_argument(code, ch)?;
         *arg = value;
         ch = c;

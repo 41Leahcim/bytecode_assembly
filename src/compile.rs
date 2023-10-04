@@ -150,6 +150,7 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "jmp" => Ok(Some(Token::Jmp(Label::Base(read_jmp_label(code)?)))),
         "jl" => Ok(Some(Token::Jl(Label::Base(read_jmp_label(code)?)))),
         "jg" => Ok(Some(Token::Jg(Label::Base(read_jmp_label(code)?)))),
+        "je" => Ok(Some(Token::Je(Label::Base(read_jmp_label(code)?)))),
         "cmp" => {
             let args = read_arguments::<2>(code)?;
             Ok(Some(Token::Cmp(args[0], args[1])))
@@ -237,18 +238,26 @@ fn read_labels(tokens: &[Token]) -> HashMap<String, usize> {
         .collect::<HashMap<_, _>>()
 }
 
+fn convert_label(label: &Label, labels: &HashMap<String, usize>) -> Label {
+    match label {
+        Label::Base(label) => Label::Address(
+            *labels
+                .get(label)
+                .unwrap_or_else(|| panic!("Label \"{label}\" doesn't exist")),
+        ),
+        Label::Address(address) => Label::Address(*address),
+    }
+}
+
 pub fn convert_labels(tokens: &mut [Token]) {
     let labels = read_labels(tokens);
     for token in tokens {
         #[allow(clippy::single_match)]
         match token {
-            Token::Jmp(Label::Base(label)) => {
-                *token = Token::Jmp(Label::Address(
-                    *labels
-                        .get(label)
-                        .unwrap_or_else(|| panic!("Label \"{label}\" doesn't exist")),
-                ))
-            }
+            Token::Jmp(label) => *token = Token::Jmp(convert_label(label, &labels)),
+            Token::Jl(label) => *token = Token::Jl(convert_label(label, &labels)),
+            Token::Je(label) => *token = Token::Je(convert_label(label, &labels)),
+            Token::Jg(label) => *token = Token::Jg(convert_label(label, &labels)),
             _ => {}
         }
     }

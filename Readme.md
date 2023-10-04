@@ -34,3 +34,5 @@ The following table is an overview of all available instructions, their argument
 ### Branching
 Branching is the way of moving to a different part of the code in Assembly. In other languages you usually use if-statements or loops instead, though languages like C and C++ also support goto. To mark a part of the code as a point to jump to, you have to put a label just before that point. A label is written as `label:` where label could be replaced with any group of characters without whitespace.
  - `jmp label` : unconditionally jump to `label`
+ - `jl label` : jump if the result of the last calculation was negative or left operand of the last cmp was less than the right operand
+ - `jg label` : jump if the result of the last calculation was positive or left operand of the last cmp was greater than the right operand

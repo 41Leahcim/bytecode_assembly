@@ -76,7 +76,26 @@ fn read_later_argument(code: &mut Code, c: char) -> Result<(Value, char), Error>
 
 /// Reads one register and multiple arguments.
 /// Where SIZE is the number of arguments.
-pub fn read_arguments<const SIZE: usize>(code: &mut Code) -> Result<(u8, [Value; SIZE]), Error> {
+pub fn read_arguments<const SIZE: usize>(code: &mut Code) -> Result<[Value; SIZE], Error> {
+    // Initialize the argument array and make sure it's size it is not empty
+    let mut arguments = [Value::Number(0); SIZE];
+    assert!(SIZE > 0);
+
+    // Read the first argument
+    let (value, mut ch) = read_first_argument(code)?;
+    arguments[0] = value;
+
+    // Read arguments
+    for arg in arguments.iter_mut() {
+        let (value, c) = read_later_argument(code, ch)?;
+        *arg = value;
+        ch = c;
+    }
+    Ok(arguments)
+}
+
+pub fn read_reg_args<const SIZE: usize>(code: &mut Code) -> Result<(u8, [Value; SIZE]), Error> {
+    // Initialize the arguments array and read the register
     let mut arguments = [Value::Number(0); SIZE];
     let (value, mut ch) = read_first_argument(code)?;
 

@@ -3,9 +3,10 @@ use crate::{
     value::Value,
 };
 pub mod argument;
-use argument::read_arguments;
 
 use serde::{Deserialize, Serialize};
+
+use self::argument::read_reg_args;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Token {
@@ -19,6 +20,9 @@ pub enum Token {
     Mod(u8, Value, Value),
     Label(String),
     Jmp(Label),
+    Jl(Label),
+    Jg(Label),
+    Cmp(Value, Value),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,7 +35,7 @@ impl Token {
     /// Reads the arguments of the move operation and returns the operation with arguments
     pub fn mov(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<1>(code)?;
+        let (register, arguments) = read_reg_args::<1>(code)?;
 
         // Return the instruction
         Ok(Token::Mov(register, arguments[0]))
@@ -40,7 +44,7 @@ impl Token {
     /// Reads the add operation, returns the add operation with arguments
     pub fn add(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<2>(code)?;
+        let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the add operation
         Ok(Token::Add(register, arguments[0], arguments[1]))
@@ -49,7 +53,7 @@ impl Token {
     /// Reads the sub operation, returns the sub operation with arguments
     pub fn sub(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<2>(code)?;
+        let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the sub operation
         Ok(Token::Sub(register, arguments[0], arguments[1]))
@@ -58,7 +62,7 @@ impl Token {
     /// Reads the mul operation, returns the mul operation with arguments
     pub fn mul(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<2>(code)?;
+        let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the mul operation
         Ok(Token::Mul(register, arguments[0], arguments[1]))
@@ -67,7 +71,7 @@ impl Token {
     /// Reads the div operation, returns the div operation with arguments
     pub fn div(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<2>(code)?;
+        let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the div operation
         Ok(Token::Div(register, arguments[0], arguments[1]))
@@ -76,7 +80,7 @@ impl Token {
     /// Reads the mod operation, returns the mod operation with arguments
     pub fn modulo(code: &mut Code) -> Result<Token, Error> {
         // Read the arguments
-        let (register, arguments) = read_arguments::<2>(code)?;
+        let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the mod operation
         Ok(Token::Mod(register, arguments[0], arguments[1]))

@@ -1,4 +1,7 @@
-use crate::token::{argument::skip_whitespace, Label};
+use crate::token::{
+    argument::{read_arguments, skip_whitespace},
+    Label,
+};
 
 use super::Token;
 use code::Code;
@@ -145,6 +148,12 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         "div" => Ok(Some(Token::div(code)?)),
         "mod" => Ok(Some(Token::modulo(code)?)),
         "jmp" => Ok(Some(Token::Jmp(Label::Base(read_jmp_label(code)?)))),
+        "jl" => Ok(Some(Token::Jl(Label::Base(read_jmp_label(code)?)))),
+        "jg" => Ok(Some(Token::Jg(Label::Base(read_jmp_label(code)?)))),
+        "cmp" => {
+            let args = read_arguments::<2>(code)?;
+            Ok(Some(Token::Cmp(args[0], args[1])))
+        }
         label if label.ends_with(':') => {
             let label_name = label.chars().take_while(|c| *c != ':').collect::<String>();
             if label.len() != label_name.len() + 1 {

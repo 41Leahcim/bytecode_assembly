@@ -78,8 +78,23 @@ impl Value {
 
             // If any of the values is still a register, panic
             (Self::Register(_), _) | (_, Self::Register(_)) => {
-                panic!("Unexpected register during addition");
+                panic!("Unexpected register during operation");
             }
         }
+    }
+
+    pub fn compare(&self, other: &Self, registers: &[Self]) -> std::cmp::Ordering {
+        let left = self.take(registers);
+        let right = other.take(registers);
+        match (left, right) {
+            (Self::Register(_), _) | (_, Self::Register(_)) => {
+                panic!("Unexpected register during comparison")
+            }
+            (Self::Number(left), Self::Number(right)) => left.cmp(&right),
+        }
+    }
+
+    pub fn compare_zero(&self, registers: &[Self]) -> std::cmp::Ordering {
+        self.compare(&Self::Number(0), registers)
     }
 }

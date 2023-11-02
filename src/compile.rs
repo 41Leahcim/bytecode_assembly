@@ -6,7 +6,7 @@ use crate::token::{
 use super::Token;
 use code::Code;
 use error::Error;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 pub mod code;
 pub mod error;
@@ -177,7 +177,7 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
 /// Splits the code into tokens
 pub fn split_tokens(code: &str) -> Result<Vec<Token>, Error> {
     // Create a new code iterator and a vector for the tokens
-    let mut code = Code::from_str(code).unwrap();
+    let mut code = Code::from_str(code);
     let mut tokens = Vec::new();
 
     // If the code is empty, return the empty vector

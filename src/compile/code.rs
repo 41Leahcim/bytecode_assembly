@@ -1,37 +1,20 @@
-use std::str::FromStr;
+use std::str::Chars;
 
 /// An iterator over the characters in a piece of code
-pub struct Code {
+pub struct Code<'a> {
     line: usize,
     column: usize,
-    index: usize,
-    buffer: Vec<char>,
-}
-
-// Creates a new code iterator from a string slice
-impl FromStr for Code {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Collect the characters in a vector to make access to chars easier
-        let buffer = s.chars().collect::<Vec<char>>();
-
-        // Create the Code iterator, starting on column 0 of line 1
-        Ok(Self {
-            line: 1,
-            column: 0,
-            buffer,
-            index: 0,
-        })
-    }
+    buffer: Chars<'a>,
+    last: Option<char>,
 }
 
 // Gives iterator functionality to Code
-impl Iterator for Code {
+impl<'a> Iterator for Code<'a> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Get the current character
-        let result = self.buffer.get(self.index).map(char::to_owned);
+        let result = self.buffer.next();
 
         // If it's a new-line character, add 1 to the line number and set column to 0
         // Otherwise, move to the next column
@@ -41,23 +24,24 @@ impl Iterator for Code {
         } else {
             self.column += 1;
         }
+        self.last = result;
 
         // Increment the index and return the character
-        self.index += 1;
         result
     }
 }
 
-// Allows to take a specific character
-impl std::ops::Index<usize> for Code {
-    type Output = char;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        self.buffer.get(index).unwrap()
+impl<'a> Code<'a> {
+    pub fn from_str(s: &'a str) -> Self {
+        // Create the Code iterator, starting on column 0 of line 1
+        Self {
+            line: 1,
+            column: 0,
+            buffer: s.chars(),
+            last: None,
+        }
     }
-}
 
-impl Code {
     /// Returns the line number
     pub const fn line(&self) -> usize {
         self.line
@@ -70,18 +54,6 @@ impl Code {
 
     /// Returns whether the end of the file was reached
     pub fn eof(&self) -> bool {
-        self.index > self.buffer.len()
-    }
-
-    /// Returns the length of the buffer
-    #[allow(unused)]
-    pub fn len(&self) -> usize {
-        self.buffer.len()
-    }
-
-    /// Returns the number of bytes read
-    #[allow(unused)]
-    pub const fn bytes_read(&self) -> usize {
-        self.index
+        self.last.is_none()
     }
 }

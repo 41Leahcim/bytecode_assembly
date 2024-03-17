@@ -1,4 +1,4 @@
-use crate::{token::Label, value::Value, Token};
+use crate::{token::Label, Token};
 use std::{
     cmp::Ordering,
     collections::HashMap,
@@ -7,7 +7,7 @@ use std::{
 };
 
 /// Executes the output command
-pub fn out(output: &str, registers: &[Value]) {
+pub fn out(output: &str, registers: &[i64]) {
     // Create a string for the result and registers
     let mut result = String::new();
     let mut register = String::new();
@@ -76,7 +76,7 @@ fn label_to_address(label: &Label, labels: &HashMap<String, usize>) -> usize {
 /// Executes the tokens
 pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
     // Create and initialize the registers
-    let mut registers = [Value::Number(0); 256];
+    let mut registers = [0i64; 256];
     let labels = read_labels(tokens);
     let mut index = 0;
     let mut comparison = Ordering::Equal;
@@ -99,27 +99,27 @@ pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
             Token::Add(id, value, value2) => {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_add);
-                comparison = registers[*id as usize].compare_zero(&registers);
+                comparison = registers[*id as usize].cmp(&0);
             }
             Token::Sub(id, value, value2) => {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_sub);
-                comparison = registers[*id as usize].compare_zero(&registers);
+                comparison = registers[*id as usize].cmp(&0);
             }
             Token::Mul(id, value, value2) => {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_mul);
-                comparison = registers[*id as usize].compare_zero(&registers);
+                comparison = registers[*id as usize].cmp(&0);
             }
             Token::Div(id, value, value2) => {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_div);
-                comparison = registers[*id as usize].compare_zero(&registers);
+                comparison = registers[*id as usize].cmp(&0);
             }
             Token::Mod(id, value, value2) => {
                 registers[*id as usize] =
                     value.perform_operation(value2, &registers, i64::wrapping_rem);
-                comparison = registers[*id as usize].compare_zero(&registers);
+                comparison = registers[*id as usize].cmp(&0);
             }
             Token::Jmp(label) => index = label_to_address(label, &labels),
             Token::Jl(label) if comparison == Ordering::Less => {

@@ -52,10 +52,10 @@ impl Value {
 
     /// Take the value of the register, if ```self``` is a register
     /// Otherwise, ```self```
-    pub const fn take(&self, registers: &[Self]) -> Self {
+    pub const fn take(&self, registers: &[i64]) -> i64 {
         match self {
             Self::Register(register) => registers[*register as usize],
-            value @ Self::Number(_) => *value,
+            Self::Number(value) => *value,
         }
     }
 
@@ -63,38 +63,18 @@ impl Value {
     pub fn perform_operation(
         &self,
         other: &Self,
-        registers: &[Self],
+        registers: &[i64],
         operation: impl FnOnce(i64, i64) -> i64,
-    ) -> Self {
+    ) -> i64 {
         // Take the value of both values, so we only add the actual values
         let left = self.take(registers);
         let right = other.take(registers);
-
-        match (left, right) {
-            // If the values are numbers, add the numbers
-            (Self::Number(number), Self::Number(number2)) => {
-                Self::Number(operation(number, number2))
-            }
-
-            // If any of the values is still a register, panic
-            (Self::Register(_), _) | (_, Self::Register(_)) => {
-                panic!("Unexpected register during operation");
-            }
-        }
+        operation(left, right)
     }
 
-    pub fn compare(&self, other: &Self, registers: &[Self]) -> std::cmp::Ordering {
+    pub fn compare(&self, other: &Self, registers: &[i64]) -> std::cmp::Ordering {
         let left = self.take(registers);
         let right = other.take(registers);
-        match (left, right) {
-            (Self::Register(_), _) | (_, Self::Register(_)) => {
-                panic!("Unexpected register during comparison")
-            }
-            (Self::Number(left), Self::Number(right)) => left.cmp(&right),
-        }
-    }
-
-    pub fn compare_zero(&self, registers: &[Self]) -> std::cmp::Ordering {
-        self.compare(&Self::Number(0), registers)
+        left.cmp(&right)
     }
 }

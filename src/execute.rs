@@ -94,7 +94,6 @@ pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
         // Execute the current token
         // Store the register the result is assigned to, if applicable
         match token {
-            Token::Comment(_) | Token::Label(_) => {}
             Token::Out(output) => out(output, &registers),
             Token::Mov(id, value) => registers[*id as usize] = value.take(&registers),
             Token::Add(id, value, value2) => {
@@ -124,15 +123,15 @@ pub fn execute(tokens: &[Token], mut cycles: Option<usize>) {
             }
             Token::Jmp(label) => index = label_to_address(label, &labels),
             Token::Jl(label) if comparison == Ordering::Less => {
-                index = label_to_address(label, &labels)
+                index = label_to_address(label, &labels);
             }
             Token::Jg(label) if comparison == Ordering::Greater => {
-                index = label_to_address(label, &labels)
+                index = label_to_address(label, &labels);
             }
             Token::Je(label) if comparison == Ordering::Equal => {
-                index = label_to_address(label, &labels)
+                index = label_to_address(label, &labels);
             }
-            Token::Jl(_) | Token::Jg(_) | Token::Je(_) => {}
+            Token::Jl(_) | Token::Jg(_) | Token::Je(_) | Token::Comment(_) | Token::Label(_) => {}
             Token::Cmp(left, right) => comparison = left.compare(right, &registers),
         }
         index += 1;

@@ -109,7 +109,7 @@ pub fn read_reg_args<const SIZE: usize>(code: &mut Code) -> Result<(u8, [Value; 
     };
 
     // Read arguments
-    for arg in arguments.iter_mut() {
+    for arg in &mut arguments {
         let (value, c) = read_later_argument(code, ch)?;
         *arg = value;
         ch = c;

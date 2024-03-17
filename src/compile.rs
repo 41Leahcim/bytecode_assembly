@@ -157,13 +157,13 @@ fn parse_command(command: &str, code: &mut Code) -> Result<Option<Token>, Error>
         }
         label if label.ends_with(':') => {
             let label_name = label.chars().take_while(|c| *c != ':').collect::<String>();
-            if label.len() != label_name.len() + 1 {
-                panic!(
-                    "Invalid label \"{command}\" at: {}:{}",
-                    code.line(),
-                    code.column()
-                );
-            }
+            assert_eq!(
+                label.len(),
+                label_name.len() + 1,
+                "Invalid label \"{command}\" at: {}:{}",
+                code.line(),
+                code.column()
+            );
             Ok(Some(Token::Label(label_name)))
         }
         _ => panic!(

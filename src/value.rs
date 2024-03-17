@@ -52,10 +52,10 @@ impl Value {
 
     /// Take the value of the register, if ```self``` is a register
     /// Otherwise, ```self```
-    pub fn take(&self, registers: &[Self]) -> Self {
+    pub const fn take(&self, registers: &[Self]) -> Self {
         match self {
-            Value::Register(register) => registers[*register as usize],
-            value => *value,
+            Self::Register(register) => registers[*register as usize],
+            value @ Self::Number(_) => *value,
         }
     }
 

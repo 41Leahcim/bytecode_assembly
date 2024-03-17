@@ -34,56 +34,56 @@ pub enum Label {
 
 impl Token {
     /// Reads the arguments of the move operation and returns the operation with arguments
-    pub fn mov(code: &mut Code) -> Result<Token, Error> {
+    pub fn mov(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<1>(code)?;
 
         // Return the instruction
-        Ok(Token::Mov(register, arguments[0]))
+        Ok(Self::Mov(register, arguments[0]))
     }
 
     /// Reads the add operation, returns the add operation with arguments
-    pub fn add(code: &mut Code) -> Result<Token, Error> {
+    pub fn add(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the add operation
-        Ok(Token::Add(register, arguments[0], arguments[1]))
+        Ok(Self::Add(register, arguments[0], arguments[1]))
     }
 
     /// Reads the sub operation, returns the sub operation with arguments
-    pub fn sub(code: &mut Code) -> Result<Token, Error> {
+    pub fn sub(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the sub operation
-        Ok(Token::Sub(register, arguments[0], arguments[1]))
+        Ok(Self::Sub(register, arguments[0], arguments[1]))
     }
 
     /// Reads the mul operation, returns the mul operation with arguments
-    pub fn mul(code: &mut Code) -> Result<Token, Error> {
+    pub fn mul(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the mul operation
-        Ok(Token::Mul(register, arguments[0], arguments[1]))
+        Ok(Self::Mul(register, arguments[0], arguments[1]))
     }
 
     /// Reads the div operation, returns the div operation with arguments
-    pub fn div(code: &mut Code) -> Result<Token, Error> {
+    pub fn div(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the div operation
-        Ok(Token::Div(register, arguments[0], arguments[1]))
+        Ok(Self::Div(register, arguments[0], arguments[1]))
     }
 
     /// Reads the mod operation, returns the mod operation with arguments
-    pub fn modulo(code: &mut Code) -> Result<Token, Error> {
+    pub fn modulo(code: &mut Code) -> Result<Self, Error> {
         // Read the arguments
         let (register, arguments) = read_reg_args::<2>(code)?;
 
         // Return the mod operation
-        Ok(Token::Mod(register, arguments[0], arguments[1]))
+        Ok(Self::Mod(register, arguments[0], arguments[1]))
     }
 }

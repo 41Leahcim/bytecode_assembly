@@ -53,7 +53,7 @@ impl<'a> Code<'a> {
     }
 
     /// Returns whether the end of the file was reached
-    pub fn eof(&self) -> bool {
+    pub const fn eof(&self) -> bool {
         self.last.is_none()
     }
 }

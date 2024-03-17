@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic, clippy::nursery)]
+
 use clap::Parser;
 use std::{fs::File, io::BufWriter, path::PathBuf, time::Instant};
 
